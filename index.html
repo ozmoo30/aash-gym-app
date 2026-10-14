@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عاش! - الإمبراطورية الرياضية الكاملة</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bg: '#070709',
+                        card: '#121318',
+                        cardHover: '#1A1C23',
+                        primary: '#FF5A00',
+                        primaryLight: '#FF7A33',
+                        muted: '#8D99B8',
+                        success: '#10B981',
+                        gold: '#F59E0B',
+                        silver: '#9CA3AF',
+                        bronze: '#D97706'
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-out forwards',
+                        'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                        slideUp: { '0%': { transform: 'translateY(18px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
+        
+        body { 
+            font-family: 'Cairo', sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+            background-color: #070709;
+            background-image: 
+                radial-gradient(circle at 15% 0%, rgba(255, 90, 0, 0.12) 0%, transparent 45%),
+                radial-gradient(circle at 85% 10%, rgba(245, 158, 11, 0.06) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .screen { display: none; }
+        .screen.active { display: block; animation: fadeIn 0.35s ease-out; }
+
+        .toast-enter { transform: translateY(-100%) scale(0.9); opacity: 0; }
+        .toast-enter-active { transform: translateY(0) scale(1); opacity: 1; transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+        .timer-circle {
+            transition: stroke-dashoffset 1s linear;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        .glass {
+            background: rgba(18, 19, 24, 0.82);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .pro-card {
+            background: linear-gradient(180deg, rgba(26, 28, 35, 0.7) 0%, rgba(18, 19, 24, 0.95) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .pro-card:hover {
+            border-color: rgba(255, 90, 0, 0.45);
+            box-shadow: 0 15px 35px -10px rgba(255, 90, 0, 0.15);
+            transform: translateY(-3px);
+        }
+
+        .hover-progress { width: 0%; transition: width 0.3s ease; }
+        .ex-card:hover .hover-progress { width: 100%; }
+    </style>
+</head>
+<body class="text-white min-h-screen overflow-x-hidden selection:bg-primary selection:text-white">
+
+    <!-- حاوية التنبيهات -->
+    <div id="toast-container" class="fixed top-5 left-1/2 transform -translate-x-1/2 flex flex-col gap-2 z-[120] w-[92%] max-w-md pointer-events-none"></div>
+
+    <!-- ==================== بوابة تسجيل الدخول وإنشاء الحساب واستعادة الباسورد ==================== -->
+    <div id="auth-gate" class="fixed inset-0 z-[100] bg-bg flex items-center justify-center p-4 overflow-y-auto" style="background-image: radial-gradient(circle at 50% 0%, rgba(255, 90, 0, 0.18) 0%, transparent 55%);">
+        <div class="pro-card p-8 rounded-[2.25rem] w-full max-w-md border border-white/10 shadow-2xl animate-slide-up my-auto">
+            <!-- اللوجو -->
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-tr from-primary via-orange-500 to-amber-400 flex items-center justify-center shadow-[0_0_30px_rgba(255,90,0,0.45)] font-black text-3xl italic tracking-tighter text-white border border-white/20">
+                    A!
+                </div>
+                <h1 class="text-3xl font-black tracking-wide">عاش! - فورمة الشلة</h1>
+                <p class="text-xs font-bold text-gray-400 mt-1">سجل دخولك عشان تحفظ أوزانك وترافق شلتك يومياً</p>
+            </div>
+
+            <!-- تابات التبديل (دخول / حساب جديد) -->
+            <div id="auth-tabs" class="grid grid-cols-2 bg-bg/90 p-1.5 rounded-2xl border border-white/5 mb-6">
+                <button type="button" id="tab-login-btn" onclick="switchAuthMode('login')" class="py-2.5 rounded-xl font-black text-xs bg-primary text-white shadow transition">تسجيل الدخول</button>
+                <button type="button" id="tab-signup-btn" onclick="switchAuthMode('signup')" class="py-2.5 rounded-xl font-bold text-xs text-muted hover:text-white transition">حساب جديد</button>
+            </div>
+
+            <!-- عنوان استعادة كلمة المرور (مخفي افتراضياً) -->
+            <div id="reset-header" class="hidden text-center mb-5 bg-bg/80 p-3.5 rounded-2xl border border-primary/30">
+                <h3 class="font-black text-sm text-primary">استعادة كلمة المرور 🔑</h3>
+                <p class="text-[11px] text-gray-400 font-bold mt-1">اكتب إيميلك وهنبعتلك لينك فوري لتعيين باسورد جديد</p>
+            </div>
+
+            <!-- الفورم -->
+            <form id="auth-form" class="space-y-4">
+                <div id="name-field-wrap" class="hidden">
+                    <label class="text-xs font-bold text-gray-300 block mb-1.5">اسمك في الشلة</label>
+                    <input type="text" id="auth-name" placeholder="مثال: احمد" class="w-full p-3.5 rounded-xl bg-bg border border-white/10 focus:outline-none focus:border-primary text-sm text-white">
+                </div>
+
+                <div>
+                    <label class="text-xs font-bold text-gray-300 block mb-1.5">البريد الإلكتروني</label>
+                    <input type="email" id="auth-email" placeholder="example@example.com" required class="w-full p-3.5 rounded-xl bg-bg border border-white/10 focus:outline-none focus:border-primary text-sm text-white text-left" dir="ltr">
+                </div>
+
+                <div id="password-field-wrap">
+                    <div class="flex justify-between items-center mb-1.5">
+                        <label class="text-xs font-bold text-gray-300">كلمة المرور</label>
+                        <button type="button" id="forgot-pass-link" onclick="switchAuthMode('reset')" class="text-[11px] font-bold text-primary hover:underline">نسيت كلمة المرور؟</button>
+                    </div>
+                    <input type="password" id="auth-password" placeholder="••••••••" required class="w-full p-3.5 rounded-xl bg-bg border border-white/10 focus:outline-none focus:border-primary text-sm text-white text-left" dir="ltr">
+                </div>
+
+                <button type="submit" id="auth-submit-btn" class="w-full bg-gradient-to-r from-primary to-orange-600 hover:from-orange-600 hover:to-primary text-white font-black py-4 rounded-xl transition shadow-lg shadow-primary/25 flex justify-center items-center gap-2">
+                    <span id="auth-btn-text">دخول للبطولة 🔥</span>
+                    <div id="auth-spinner" class="hidden w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                </button>
+
+                <button type="button" id="back-to-login-btn" onclick="switchAuthMode('login')" class="hidden w-full bg-bg border border-white/10 text-gray-300 font-bold py-3 rounded-xl text-xs hover:text-white transition">
+                    رجوع لتسجيل الدخول
+                </button>
+            </form>
+
+            <!-- فاصل الدخول السريع -->
+            <div class="my-5 flex items-center gap-3">
+                <div class="h-px bg-white/10 flex-1"></div>
+                <span class="text-[11px] text-gray-500 font-bold">أو جرب فوراً</span>
+                <div class="h-px bg-white/10 flex-1"></div>
+            </div>
+
+            <button type="button" id="guest-login-btn" class="w-full bg-bg/90 hover:bg-cardHover border border-white/10 hover:border-primary/50 text-gray-200 font-black py-3.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
+                <span>🚀</span>
+                <span>الدخول السريع كزائر (مع حفظ تلقائي للبيانات)</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== جسم التطبيق الكامل (يظهر بعد تسجيل الدخول) ==================== -->
+    <div id="app-wrapper" class="hidden pb-32">
+
+        <!-- نافذة تفاصيل التمرينة (Modal) -->
+        <div id="exercise-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-[90] hidden items-center justify-center p-4">
+            <div class="pro-card rounded-[2.25rem] max-w-lg w-full overflow-hidden shadow-2xl animate-slide-up max-h-[90vh] flex flex-col border border-white/15">
+                <div class="relative h-64 sm:h-72 bg-black flex-shrink-0">
+                    <img id="modal-img" src="" class="w-full h-full object-contain">
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#121318] via-transparent to-black/40 pointer-events-none"></div>
+                    <button onclick="closeModal()" class="absolute top-4 left-4 bg-black/70 hover:bg-primary text-white w-10 h-10 rounded-full flex items-center justify-center transition font-black border border-white/10">✕</button>
+                    <span id="modal-muscle" class="absolute bottom-4 right-4 bg-primary px-4 py-1.5 rounded-full text-xs font-black shadow-lg"></span>
+                    <span class="absolute bottom-4 left-4 bg-black/80 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                        محاكاة حركية للأداء
+                    </span>
+                </div>
+                <div class="p-6 overflow-y-auto space-y-4">
+                    <div>
+                        <h3 id="modal-title" class="text-2xl font-black text-white"></h3>
+                        <p id="modal-en-title" class="text-xs text-muted font-bold font-mono mt-0.5"></p>
+                    </div>
+                    <div class="flex flex-wrap gap-2 text-xs font-bold">
+                        <span id="modal-sets" class="bg-bg/90 px-3.5 py-1.5 rounded-xl border border-white/10 text-primary"></span>
+                        <span id="modal-equip" class="bg-bg/90 px-3.5 py-1.5 rounded-xl border border-white/10 text-gray-300"></span>
+                        <span id="modal-level" class="bg-bg/90 px-3.5 py-1.5 rounded-xl border border-white/10 text-amber-400"></span>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-200 text-sm mb-2">طريقة الأداء الصحيحة والتركيز العضلي:</h4>
+                        <p id="modal-desc" class="text-gray-300 text-sm leading-relaxed bg-bg/80 p-4 rounded-2xl border border-white/5"></p>
+                    </div>
+                    <button id="modal-add-btn" class="w-full bg-gradient-to-r from-primary to-orange-600 hover:from-orange-600 hover:to-primary text-white font-black py-4 rounded-2xl transition shadow-lg shadow-primary/25">
+                        + إضافة لجدول تمرين النهاردة 🔥
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- الهيدر الاحترافي مع حالة الاتصال السحابي وزر الخروج -->
+        <header class="glass border-b border-white/5 sticky top-0 z-40 px-4 py-3.5">
+            <div class="max-w-6xl mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-primary via-orange-500 to-amber-400 flex items-center justify-center shadow-[0_0_25px_rgba(255,90,0,0.4)] font-black text-xl italic tracking-tighter text-white border border-white/20">
+                        A!
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-xl font-black tracking-wide">عاش!</h1>
+                            <span id="cloud-status-badge" class="bg-emerald-500/15 text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded-full border border-emerald-500/30 flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> متصل بالسحابة
+                            </span>
+                        </div>
+                        <p class="text-[11px] font-bold text-gray-400">يا وحش: <span id="header-username" class="text-white">أسامة</span></p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="copyInvite()" class="bg-bg/90 hover:bg-cardHover border border-white/10 hover:border-primary/50 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                        <span class="text-primary font-black">#</span>
+                        <span class="hidden sm:inline">كود الشلة</span>
+                    </button>
+                    <button id="logout-btn" class="bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 px-3 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5">
+                        <span>خروج</span>
+                        <span>🚪</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- ==================== 1. شاشة الرئيسية (Dashboard) ==================== -->
+        <div id="view-dashboard" class="screen active">
+            <main class="max-w-6xl mx-auto p-4 space-y-6 mt-2">
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <!-- الستريك -->
+                    <section class="pro-card p-6 rounded-[2rem] flex flex-col justify-between relative overflow-hidden" style="background: radial-gradient(circle at top left, rgba(255,90,0,0.22), rgba(18,19,24,0.95) 70%);">
+                        <div class="flex justify-between items-start">
+                            <span class="text-[11px] font-black text-primary bg-primary/15 px-3 py-1 rounded-full border border-primary/30">سلسلة الالتزام الجماعي</span>
+                            <span class="text-3xl">🔥</span>
+                        </div>
+                        <div class="my-4 flex items-baseline gap-2.5">
+                            <span class="text-6xl font-black text-white tracking-tighter" id="streak-counter">24</span>
+                            <span class="text-xl font-black text-primary">يوم متتالي</span>
+                        </div>
+                        <div class="bg-black/40 px-3.5 py-2.5 rounded-xl border border-white/5 text-xs text-gray-300 font-bold flex items-center justify-between">
+                            <span>⚠️ لو عضو كسل هترجعوا للصفر!</span>
+                            <span class="text-primary font-black">محفوظ تلقائياً</span>
+                        </div>
+                    </section>
+
+                    <!-- عجلة الحظ -->
+                    <section class="pro-card p-6 rounded-[2rem] flex flex-col justify-between text-center">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-black text-gray-200 text-sm">روليت عضلة اليوم 🎲</h3>
+                            <span class="text-[11px] text-muted font-bold bg-bg px-2.5 py-1 rounded-lg border border-white/5">اختيار عشوائي</span>
+                        </div>
+                        <div id="roulette-box" class="bg-bg/90 border-2 border-dashed border-gray-700/80 rounded-2xl p-4 my-3 flex items-center justify-center min-h-[90px] transition-all">
+                            <span id="roulette-result" class="text-2xl font-black text-white">اضغط للف العجلة</span>
+                        </div>
+                        <button id="spin-btn" class="w-full bg-white text-bg font-black py-3 rounded-xl hover:bg-gray-200 transition text-sm shadow-md active:scale-95">
+                            لف العجلة الآن!
+                        </button>
+                    </section>
+
+                    <!-- متتبع شرب المياه وإجمالي الأوزان -->
+                    <section class="pro-card p-6 rounded-[2rem] flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-2.5">
+                                <h3 class="font-black text-gray-200 text-sm">ترطيب العضلات اليومي 💧</h3>
+                                <span id="water-text" class="text-xs font-black text-sky-400 bg-sky-500/10 px-2.5 py-1 rounded-lg border border-sky-500/20">1.5 / 3.5 لتر</span>
+                            </div>
+                            <div class="w-full bg-bg h-3 rounded-full overflow-hidden mb-3.5 border border-white/5">
+                                <div id="water-bar" class="bg-gradient-to-r from-sky-500 to-cyan-400 h-full transition-all duration-300 rounded-full" style="width: 42%"></div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="addWater(0.25)" class="flex-1 bg-bg hover:bg-sky-500/10 hover:border-sky-500/50 border border-white/10 py-2 rounded-xl text-xs font-bold text-sky-400 transition">+ كوب (250 مل)</button>
+                                <button onclick="addWater(0.5)" class="flex-1 bg-bg hover:bg-sky-500/10 hover:border-sky-500/50 border border-white/10 py-2 rounded-xl text-xs font-bold text-sky-400 transition">+ إزازة (500 مل)</button>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-white/5 flex justify-between items-center">
+                            <span class="text-xs text-gray-400 font-bold">إجمالي أوزانك اليوم (Volume):</span>
+                            <span id="total-volume-badge" class="text-base font-black text-primary">0 كجم</span>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- جدول تمرينة الشلة اليومية مع مسجل الأوزان -->
+                <section class="pro-card p-6 rounded-[2rem]">
+                    <div class="flex flex-wrap justify-between items-center gap-3 mb-5">
+                        <div>
+                            <h3 class="font-black text-lg text-white">جدول تمرينة النهاردة ومسجل الأوزان 📋</h3>
+                            <p class="text-xs text-gray-400 font-bold mt-0.5">أي وزن أو تمرينة بتعدلها هنا بتتحفظ فوراً في قاعدة البيانات بتاعتك!</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="switchTab('splits')" class="text-xs font-bold bg-bg text-gray-200 border border-white/10 px-3.5 py-2 rounded-xl hover:border-primary transition">
+                                تحميل جدول جاهز ⚡
+                            </button>
+                            <button onclick="switchTab('exercises')" class="text-xs font-black bg-primary text-white px-4 py-2 rounded-xl hover:bg-orange-600 transition shadow-lg shadow-primary/20">
+                                + ضيف تمرينة
+                            </button>
+                        </div>
+                    </div>
+                    <div id="today-workout-list" class="space-y-3"></div>
+                </section>
+
+                <!-- حالة أعضاء الشلة -->
+                <section class="pro-card p-6 rounded-[2rem]">
+                    <div class="flex justify-between items-center mb-5">
+                        <div>
+                            <h3 class="font-black text-lg text-white">حالة وحوش الشلة النهاردة 👥</h3>
+                            <p class="text-xs text-gray-400 font-bold mt-0.5">اضغط "نكز" عشان تبعت تنبيه للمتكاسلين قبل اليوم ما يخلص</p>
+                        </div>
+                        <span id="squad-progress-badge" class="text-xs font-black bg-primary/15 px-4 py-1.5 rounded-xl text-primary border border-primary/30">2/5 خلصوا</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5" id="squad-list"></div>
+                </section>
+
+                <!-- زرار الإنهاء -->
+                <button id="done-btn" class="w-full bg-gradient-to-r from-primary via-orange-500 to-amber-500 text-white font-black text-xl py-5 rounded-2xl shadow-[0_10px_35px_rgba(255,90,0,0.4)] hover:shadow-[0_15px_45px_rgba(255,90,0,0.6)] transition-all transform active:scale-98">
+                    أنا خلصت تمرينة النهاردة! تسجيل الحضور 💪
+                </button>
+
+            </main>
+        </div>
+
+        <!-- ==================== 2. شاشة موسوعة التمارين ==================== -->
+        <div id="view-exercises" class="screen">
+            <main class="max-w-6xl mx-auto p-4 space-y-5 mt-2">
+                <div class="pro-card p-6 rounded-[2rem] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h2 class="text-2xl font-black text-white">موسوعة التمارين الذكية 🏋️</h2>
+                        <p class="text-xs text-gray-400 font-bold mt-1">اضغط على أي تمرين لعرض الشرح التفصيلي والأداء الحركي</p>
+                    </div>
+                    <div class="relative w-full md:w-72">
+                        <input type="text" id="search-input" placeholder="ابحث عن تمرينة (عربي / إنجليزي)..." class="w-full bg-bg/90 border border-white/10 rounded-2xl py-3 px-4 pr-10 focus:outline-none focus:border-primary text-sm text-white placeholder-gray-500 transition">
+                        <span class="absolute right-3.5 top-3 text-gray-400 text-sm">🔍</span>
+                    </div>
+                </div>
+
+                <div class="flex gap-2.5 overflow-x-auto no-scrollbar py-1" id="filter-container"></div>
+                <div id="exercises-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </main>
+        </div>
+
+        <!-- ==================== 3. شاشة جداول التدريب الجاهزة (Splits) ==================== -->
+        <div id="view-splits" class="screen">
+            <main class="max-w-6xl mx-auto p-4 space-y-6 mt-2">
+                <div class="pro-card p-6 rounded-[2rem]">
+                    <h2 class="text-2xl font-black text-white">أنظمة وجداول التدريب العالمية 📅</h2>
+                    <p class="text-xs text-gray-400 font-bold mt-1">اختار النظام المناسب ليك وللشلة، وبضغطة زرار نزل تمارين اليوم كله في صفحتك الرئيسية!</p>
+                </div>
+                <div id="splits-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+            </main>
+        </div>
+
+        <!-- ==================== 4. شاشة التغذية والمكملات (Nutrition) ==================== -->
+        <div id="view-nutrition" class="screen">
+            <main class="max-w-6xl mx-auto p-4 space-y-6 mt-2">
+                <div class="pro-card p-6 rounded-[2rem] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h2 class="text-2xl font-black text-white">مطبخ الفورمة ودليل المكملات 🥩</h2>
+                        <p class="text-xs text-gray-400 font-bold mt-1">وجبات عالية البروتين محسوبة السعرات والماكروز بدقة + خلاصة المكملات</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="filterMeals('all', this)" class="meal-filter-btn bg-primary text-white px-4 py-2 rounded-xl text-xs font-black transition">الكل</button>
+                        <button onclick="filterMeals('ضخامة', this)" class="meal-filter-btn bg-bg text-gray-400 border border-white/10 px-4 py-2 rounded-xl text-xs font-bold transition">وجبات ضخامة</button>
+                        <button onclick="filterMeals('تنشيف', this)" class="meal-filter-btn bg-bg text-gray-400 border border-white/10 px-4 py-2 rounded-xl text-xs font-bold transition">وجبات تنشيف</button>
+                    </div>
+                </div>
+
+                <div id="meals-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+
+                <section class="pro-card p-6 rounded-[2rem]">
+                    <h3 class="text-xl font-black text-white mb-4">الخلاصة العلمية في المكملات الغذائية ⚡</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-bg/80 p-5 rounded-2xl border border-white/5">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="font-black text-primary text-base">الكرياتين (Creatine)</span>
+                                <span class="text-[11px] bg-emerald-500/15 text-emerald-400 px-2.5 py-0.5 rounded-full font-bold">الأهم علمياً</span>
+                            </div>
+                            <p class="text-xs text-gray-400 leading-relaxed mb-3">بيزود مخزون الطاقة في العضلات (ATP)، بيديك قوة تشيل أوزان أثقل وعدات أكتر، وبيملى العضلة مية صحية.</p>
+                            <div class="text-[11px] font-bold text-gray-300 bg-card p-3 rounded-xl border border-white/5">الجرعة: 5 جرام يومياً في أي وقت مع شرب 3 لتر مية.</div>
+                        </div>
+                        <div class="bg-bg/80 p-5 rounded-2xl border border-white/5">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="font-black text-primary text-base">واي بروتين (Whey Protein)</span>
+                                <span class="text-[11px] bg-sky-500/15 text-sky-400 px-2.5 py-0.5 rounded-full font-bold">سريع الامتصاص</span>
+                            </div>
+                            <p class="text-xs text-gray-400 leading-relaxed mb-3">وسيلة سريعة وعملية لتكملة احتياجك اليومي من البروتين بعد التمرين لو مش بتقدر تاكل كمية فراخ ولحمة كافية.</p>
+                            <div class="text-[11px] font-bold text-gray-300 bg-card p-3 rounded-xl border border-white/5">الجرعة: سكوب واحد (25g بروتين) بعد التمرين أو مع الشوفان.</div>
+                        </div>
+                        <div class="bg-bg/80 p-5 rounded-2xl border border-white/5">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="font-black text-primary text-base">البري وورك أوت (Pre-Workout)</span>
+                                <span class="text-[11px] bg-amber-500/15 text-amber-400 px-2.5 py-0.5 rounded-full font-bold">باور وتركيز</span>
+                            </div>
+                            <p class="text-xs text-gray-400 leading-relaxed mb-3">خليط كافيين مع سيترولين وبيتا ألانين، بيوسع الأوعية الدموية عشان البمب ويفوقك في الأيام اللي رايح فيها الجيم تعبان.</p>
+                            <div class="text-[11px] font-bold text-gray-300 bg-card p-3 rounded-xl border border-white/5">الجرعة: سكوب قبل التمرين بـ 25 دقيقة.</div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- ==================== 5. شاشة ساحة الشلة والشات (Arena) ==================== -->
+        <div id="view-arena" class="screen">
+            <main class="max-w-6xl mx-auto p-4 space-y-6 mt-2">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- منصة التتويج -->
+                    <section class="pro-card p-6 rounded-[2rem] text-center flex flex-col justify-between">
+                        <div>
+                            <h2 class="text-2xl font-black text-white mb-1">لوحة شرف الشلة 🏆</h2>
+                            <p class="text-xs text-gray-400 font-bold mb-6">الترتيب حسب الالتزام والأوزان هذا الشهر</p>
+                        </div>
+                        
+                        <div class="flex items-end justify-center gap-3 sm:gap-5 h-52 pt-6 px-2">
+                            <div class="flex flex-col items-center flex-1">
+                                <div class="w-13 h-13 p-3 rounded-2xl bg-silver/20 border-2 border-silver flex items-center justify-center font-black text-lg text-silver mb-2 relative">
+                                    أ
+                                    <span class="absolute -top-2.5 bg-silver text-bg text-[10px] font-black px-2 rounded-full">2</span>
+                                </div>
+                                <span class="font-bold text-xs mb-2" id="podium-user-name">أسامة (أنت)</span>
+                                <div class="w-full bg-gradient-to-t from-bg to-silver/20 border-t-2 border-silver rounded-t-2xl h-24 flex flex-col justify-center">
+                                    <span class="font-black text-silver text-base">2,650</span>
+                                    <span class="text-[10px] text-gray-400">نقطة</span>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col items-center flex-1">
+                                <span class="text-2xl mb-1 animate-bounce">👑</span>
+                                <div class="w-15 h-15 p-3.5 rounded-2xl bg-gold/20 border-2 border-gold flex items-center justify-center font-black text-xl text-gold mb-2 relative shadow-[0_0_20px_rgba(245,158,11,0.3)]">
+                                    ح
+                                    <span class="absolute -top-2.5 bg-gold text-bg text-xs font-black px-2 rounded-full">1</span>
+                                </div>
+                                <span class="font-black text-sm text-gold mb-2">أحمد</span>
+                                <div class="w-full bg-gradient-to-t from-bg to-gold/25 border-t-2 border-gold rounded-t-2xl h-32 flex flex-col justify-center">
+                                    <span class="font-black text-gold text-lg">2,890</span>
+                                    <span class="text-[10px] text-gray-300">نقطة</span>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col items-center flex-1">
+                                <div class="w-13 h-13 p-3 rounded-2xl bg-bronze/20 border-2 border-bronze flex items-center justify-center font-black text-lg text-bronze mb-2 relative">
+                                    م
+                                    <span class="absolute -top-2.5 bg-bronze text-white text-[10px] font-black px-2 rounded-full">3</span>
+                                </div>
+                                <span class="font-bold text-xs mb-2">مروان</span>
+                                <div class="w-full bg-gradient-to-t from-bg to-bronze/20 border-t-2 border-bronze rounded-t-2xl h-16 flex flex-col justify-center">
+                                    <span class="font-black text-bronze text-sm">2,120</span>
+                                    <span class="text-[10px] text-gray-400">نقطة</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- شات الشلة التحفيزي اللايف -->
+                    <section class="pro-card p-6 rounded-[2rem] flex flex-col h-[360px]">
+                        <div class="flex justify-between items-center pb-3 border-b border-white/10">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-success animate-pulse"></span>
+                                <h3 class="font-black text-base">غرفة شات الشلة 💬</h3>
+                            </div>
+                            <span class="text-[11px] text-gray-400 font-bold">5 متصلين الآن</span>
+                        </div>
+
+                        <div id="chat-messages" class="flex-1 overflow-y-auto py-4 space-y-3 pr-1"></div>
+
+                        <div class="pt-2 border-t border-white/10 flex gap-2">
+                            <input type="text" id="chat-input" onkeypress="if(event.key==='Enter') sendChatMessage()" placeholder="اكتب رسالة تحفيز للشلة..." class="flex-1 bg-bg border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-primary">
+                            <button onclick="sendChatMessage()" class="bg-primary hover:bg-orange-600 text-white font-black px-5 py-2.5 rounded-xl text-xs transition">إرسال</button>
+                        </div>
+                    </section>
+                </div>
+            </main>
+        </div>
+
+        <!-- ==================== 6. شاشة أدوات الجيم (Toolkit) ==================== -->
+        <div id="view-tools" class="screen">
+            <main class="max-w-6xl mx-auto p-4 space-y-6 mt-2">
+                <section class="pro-card p-6 rounded-[2rem]">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-5">
+                        <div>
+                            <h3 class="font-black text-xl text-white">حاسبة طارات البار الذكية (Plate Calculator) 🏋️</h3>
+                            <p class="text-xs text-gray-400 font-bold mt-1">اكتب الوزن الإجمالي اللي عايز تشيله (شامل البار الـ 20 كجم)، وهنقولك تحط طارات إيه بالظبط في كل جنب!</p>
+                        </div>
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <input type="number" id="target-bar-weight" value="100" step="2.5" class="bg-bg border border-white/10 rounded-xl px-4 py-2.5 text-white font-black text-center w-28 focus:outline-none focus:border-primary">
+                            <button onclick="calculatePlates()" class="bg-primary hover:bg-orange-600 text-white font-black px-5 py-2.5 rounded-xl text-sm transition">احسب الطارات</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-bg/90 p-6 rounded-2xl border border-white/5 flex flex-col items-center justify-center min-h-[150px]">
+                        <div class="flex items-center justify-center w-full overflow-x-auto py-4">
+                            <div class="h-3 w-16 sm:w-28 bg-gray-400 rounded-r-full border-y border-gray-300"></div>
+                            <div class="h-7 w-3 bg-gray-300 rounded-sm"></div>
+                            <div id="plates-visual" class="flex items-center gap-1 px-1"></div>
+                            <div class="h-3 w-8 bg-gray-500 rounded-l-md"></div>
+                        </div>
+                        <p id="plates-text-summary" class="text-xs font-bold text-primary mt-2 text-center"></p>
+                    </div>
+                </section>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <section class="pro-card p-6 rounded-[2rem] flex flex-col items-center justify-center text-center">
+                        <h3 class="font-black text-xl mb-1">تايمر الراحة بين المجاميع ⏱️</h3>
+                        <p class="text-xs text-gray-400 font-bold mb-5">تنبيه صوتي أول ما وقت الراحة يخلص</p>
+                        <div class="relative w-44 h-44 flex items-center justify-center mb-5">
+                            <svg class="w-full h-full" viewBox="0 0 100 100">
+                                <circle class="text-bg stroke-current" stroke-width="8" cx="50" cy="50" r="42" fill="transparent"></circle>
+                                <circle id="timer-ring" class="text-primary stroke-current timer-circle" stroke-width="8" stroke-linecap="round" cx="50" cy="50" r="42" fill="transparent" stroke-dasharray="264" stroke-dashoffset="0"></circle>
+                            </svg>
+                            <div class="absolute flex flex-col items-center">
+                                <span id="timer-display" class="text-4xl font-black tracking-wider">01:00</span>
+                                <span id="timer-status" class="text-[11px] text-muted font-bold mt-1">جاهز للبدء</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 mb-4 w-full justify-center">
+                            <button onclick="setTimer(30)" class="bg-bg border border-white/10 hover:border-primary px-3.5 py-2 rounded-xl text-xs font-bold">30 ث</button>
+                            <button onclick="setTimer(60)" class="bg-bg border border-primary text-primary px-3.5 py-2 rounded-xl text-xs font-bold">60 ث</button>
+                            <button onclick="setTimer(90)" class="bg-bg border border-white/10 hover:border-primary px-3.5 py-2 rounded-xl text-xs font-bold">90 ث</button>
+                            <button onclick="setTimer(120)" class="bg-bg border border-white/10 hover:border-primary px-3.5 py-2 rounded-xl text-xs font-bold">120 ث</button>
+                        </div>
+                        <div class="flex gap-3 w-full">
+                            <button id="timer-toggle-btn" onclick="toggleTimer()" class="flex-1 bg-primary hover:bg-orange-600 text-white font-black py-3 rounded-xl transition">ابدأ التايمر</button>
+                            <button onclick="resetTimer()" class="bg-bg border border-white/10 text-gray-300 font-bold px-5 py-3 rounded-xl">إعادة</button>
+                        </div>
+                    </section>
+
+                    <section class="pro-card p-6 rounded-[2rem] flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-black text-xl mb-1">حاسبة أقصى وزن (1RM) 🏋️‍♂️</h3>
+                            <p class="text-xs text-gray-400 font-bold mb-5">اعرف أقصى وزن تقدر تشيله عدّة واحدة بأمان</p>
+                            <div class="space-y-3.5">
+                                <div>
+                                    <label class="text-xs font-bold text-gray-400 block mb-1">الوزن اللي شيلته (كجم)</label>
+                                    <input type="number" id="rm-weight" placeholder="مثال: 80" class="w-full bg-bg border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-primary">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-gray-400 block mb-1">عدد العدّات</label>
+                                    <input type="number" id="rm-reps" placeholder="مثال: 8" class="w-full bg-bg border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-primary">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-5">
+                            <div class="bg-bg p-3.5 rounded-2xl border border-white/5 text-center mb-3">
+                                <span class="text-xs text-gray-400 font-bold block">أقصى وزن متوقع ليك (1RM)</span>
+                                <span id="rm-result" class="text-2xl font-black text-primary mt-0.5 block">-- كجم</span>
+                            </div>
+                            <button onclick="calculate1RM()" class="w-full bg-white text-bg font-black py-3 rounded-xl hover:bg-gray-200 transition">احسب الآن</button>
+                        </div>
+                    </section>
+                </div>
+            </main>
+        </div>
+
+        <!-- ==================== 7. شاشة البروفايل (Profile) ==================== -->
+        <div id="view-profile" class="screen">
+            <main class="max-w-6xl mx-auto p-4 space-y-6 mt-2">
+                <section class="pro-card p-6 rounded-[2rem] flex flex-col sm:flex-row items-center justify-between gap-5">
+                    <div class="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-right">
+                        <div id="profile-avatar" class="w-20 h-20 rounded-3xl bg-gradient-to-tr from-primary to-amber-500 flex items-center justify-center text-3xl font-black text-white shadow-xl">
+                            أ
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-center sm:justify-start gap-2">
+                                <h2 id="profile-name" class="text-2xl font-black">أسامة</h2>
+                                <span class="bg-gold/20 text-gold border border-gold/30 text-xs font-black px-3 py-0.5 rounded-full">المستوى 18 ⭐</span>
+                            </div>
+                            <p id="profile-email" class="text-gray-400 text-xs font-bold mt-1">عضو في شلة "وحوش الأوليمبيا"</p>
+                        </div>
+                    </div>
+                    <div class="bg-bg/90 px-5 py-3 rounded-2xl border border-white/10 text-center">
+                        <span class="text-xs text-gray-400 font-bold block">وزن الجسم الحالي</span>
+                        <span id="current-body-weight" class="text-2xl font-black text-primary">78.5 كجم</span>
+                        <button onclick="logBodyWeight()" class="block text-[11px] text-gray-300 hover:text-white underline mt-1 mx-auto">تسجيل وزن جديد ⚖️</button>
+                    </div>
+                </section>
+
+                <section class="pro-card p-6 rounded-[2rem]">
+                    <h3 class="font-black text-lg mb-1">أرقامي القياسية المحفوظة (PRs) 🏅</h3>
+                    <p class="text-xs text-gray-400 font-bold mb-4">اضغط على أي تمرين لتحديث رقمك القياسي وحفظه في الداتا بيز</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div onclick="updatePR('bench')" class="bg-bg/80 p-5 rounded-2xl border border-white/5 hover:border-primary cursor-pointer transition text-center group">
+                            <span class="text-xs font-bold text-gray-400 block mb-1">بنش بريس (Bench Press)</span>
+                            <span id="pr-bench" class="text-3xl font-black text-white group-hover:text-primary">105 كجم</span>
+                            <span class="text-[11px] text-primary block mt-2 font-bold">تعديل الرقم ✎</span>
+                        </div>
+                        <div onclick="updatePR('squat')" class="bg-bg/80 p-5 rounded-2xl border border-white/5 hover:border-primary cursor-pointer transition text-center group">
+                            <span class="text-xs font-bold text-gray-400 block mb-1">سكوات بالبار (Squat)</span>
+                            <span id="pr-squat" class="text-3xl font-black text-white group-hover:text-primary">140 كجم</span>
+                            <span class="text-[11px] text-primary block mt-2 font-bold">تعديل الرقم ✎</span>
+                        </div>
+                        <div onclick="updatePR('deadlift')" class="bg-bg/80 p-5 rounded-2xl border border-white/5 hover:border-primary cursor-pointer transition text-center group">
+                            <span class="text-xs font-bold text-gray-400 block mb-1">رفعة ميتة (Deadlift)</span>
+                            <span id="pr-deadlift" class="text-3xl font-black text-white group-hover:text-primary">170 كجم</span>
+                            <span class="text-[11px] text-primary block mt-2 font-bold">تعديل الرقم ✎</span>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- شريط التنقل السفلي العائم -->
+        <div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 w-[95%] max-w-xl">
+            <nav class="glass border border-white/15 px-3 py-2.5 rounded-3xl shadow-[0_15px_50px_rgba(0,0,0,0.85)]">
+                <div class="flex justify-between items-center overflow-x-auto no-scrollbar px-1 gap-1">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn bg-primary/15 text-primary border border-primary/30 flex flex-col items-center min-w-[60px] py-1.5 px-2 rounded-2xl transition-all">
+                        <span class="text-lg">🏠</span>
+                        <span class="text-[10px] font-black mt-0.5">الرئيسية</span>
+                    </button>
+                    <button onclick="switchTab('exercises')" id="nav-exercises" class="nav-btn text-muted hover:text-white flex flex-col items-center min-w-[60px] py-1.5 px-2 rounded-2xl transition-all border border-transparent">
+                        <span class="text-lg">🏋️</span>
+                        <span class="text-[10px] font-bold mt-0.5">التمارين</span>
+                    </button>
+                    <button onclick="switchTab('splits')" id="nav-splits" class="nav-btn text-muted hover:text-white flex flex-col items-center min-w-[60px] py-1.5 px-2 rounded-2xl transition-all border border-transparent">
+                        <span class="text-lg">📅</span>
+                        <span class="text-[10px] font-bold mt-0.5">الجداول</span>
+                    </button>
+                    <button onclick="switchTab('nutrition')" id="nav-nutrition" class="nav-btn text-muted hover:text-white flex flex-col items-center min-w-[60px] py-1.5 px-2 rounded-2xl transition-all border border-transparent">
+                        <span class="text-lg">🥩</span>
+                        <span class="text-[10px] font-bold mt-0.5">التغذية</span>
+                    </button>
+                    <button onclick="switchTab('arena')" id="nav-arena" class="nav-btn text-muted hover:text-white flex flex-col items-center min-w-[60px] py-1.5 px-2 rounded-2xl transition-all border border-transparent">
+                        <span class="text-lg">🏆</span>
+                        <span class="text-[10px] font-bold mt-0.5">الشلة</span>
+                    </button>
+                    <button onclick="switchTab('tools')" id="nav-tools" class="nav-btn text-muted hover:text-white flex flex-col items-center min-w-[60px] py-1.5 px-2 rounded-2xl transition-all border border-transparent">
+                        <span class="text-lg">⏱️</span>
+                        <span class="text-[10px] font-bold mt-0.5">الأدوات</span>
+                    </button>
+                    <button onclick="switchTab('profile')" id="nav-profile" class="nav-btn text-muted hover:text-white flex flex-col items-center min-w-[60px] py-1.5 px-2 rounded-2xl transition-all border border-transparent">
+                        <span class="text-lg">👤</span>
+                        <span class="text-[10px] font-bold mt-0.5">حسابي</span>
+                    </button>
+                </div>
+            </nav>
+        </div>
+
+    </div>
+
+    <!-- ==================== الجافاسكريبت + Firebase Auth & Firestore ==================== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { 
+            getAuth, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword, 
+            sendPasswordResetEmail, 
+            signOut, 
+            onAuthStateChanged, 
+            updateProfile,
+            signInAnonymously 
+        } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            doc, 
+            setDoc, 
+            getDoc 
+        } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // إعدادات مشروعك على Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyC3OQCNcp9Yprkd3wAVvwOcaH8iotBO00M",
+            authDomain: "aash-b5be0.firebaseapp.com",
+            projectId: "aash-b5be0",
+            storageBucket: "aash-b5be0.firebasestorage.app",
+            messagingSenderId: "847936506407",
+            appId: "1:847936506407:web:1e06cc66c14b6a414a9c02",
+            measurementId: "G-3SF3CP6RM9"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        /* --- المتغيرات اليومية القابلة للحفظ في الداتا بيز --- */
+        let currentUserUid = null;
+        window.appState = {
+            displayName: 'أسامة',
+            streak: 24,
+            water: 1.5,
+            userDoneToday: false,
+            bodyWeight: 78.5,
+            prs: { bench: 105, squat: 140, deadlift: 170 },
+            todayWorkout: [
+                { id: 1, name: 'بنش بريس مستوي بالبار', sets: '4 مجاميع × 10 عدات', weight: 80, reps: 10, setsCount: 4, done: false },
+                { id: 2, name: 'تجميع صدر عالي بالدمبلز', sets: '4 مجاميع × 10 عدات', weight: 30, reps: 10, setsCount: 4, done: false }
+            ],
+            chatMessages: [
+                { sender: 'أحمد', text: 'يا رجالة أنا خلصت تمرينة الصدر النهاردة، البنش بريس كان مولع 🔥', me: false },
+                { sender: 'مروان', text: 'عاش يا أحمد! أنا كمان لسه مخلص ظهر وتراي، فاضل عبدالله وبيبو', me: false },
+                { sender: 'أسامة (أنت)', text: 'مسافة السكة يا وحوش، داخل الجيم دلوقتي ومش هرحم الحديد 💪', me: true }
+            ]
+        };
+
+        /* --- دالة الحفظ المزدوج (LocalStorage + Firebase Firestore) --- */
+        window.saveUserData = async function() {
+            // 1. حفظ فوري في المتصفح
+            localStorage.setItem('aash_state_' + (currentUserUid || 'guest'), JSON.stringify(window.appState));
+
+            // 2. حفظ سحابي في Firebase Firestore إذا كان المستخدم مسجلاً
+            if (currentUserUid && currentUserUid !== 'local_guest') {
+                try {
+                    await setDoc(doc(db, "users", currentUserUid), {
+                        ...window.appState,
+                        lastUpdated: new Date().toISOString()
+                    }, { merge: true });
+                } catch (err) {
+                    console.warn("Firestore sync notice:", err.message);
+                }
+            }
+        };
+
+        /* --- دالة تحميل البيانات عند فتح الموقع --- */
+        async function loadUserData(uid, defaultName) {
+            // قراءة من المتصفح أولاً للسرعة
+            const localSaved = localStorage.getItem('aash_state_' + uid);
+            if (localSaved) {
+                window.appState = { ...window.appState, ...JSON.parse(localSaved) };
+            }
+
+            // قراءة من سحابة Firestore
+            if (uid && uid !== 'local_guest') {
+                try {
+                    const snap = await getDoc(doc(db, "users", uid));
+                    if (snap.exists()) {
+                        window.appState = { ...window.appState, ...snap.data() };
+                    } else {
+                        if (defaultName) window.appState.displayName = defaultName;
+                        await window.saveUserData();
+                    }
+                } catch (err) {
+                    console.warn("Offline or Firestore rules pending, using local backup.");
+                }
+            }
+
+            if (defaultName) window.appState.displayName = defaultName;
+            syncUIWithState();
+        }
+
+        /* --- تحديث الشاشات بالبيانات المحفوظة --- */
+        function syncUIWithState() {
+            const st = window.appState;
+            const uName = st.displayName || 'أسامة';
+
+            document.getElementById('header-username').textContent = uName;
+            document.getElementById('profile-name').textContent = uName;
+            document.getElementById('profile-avatar').textContent = uName.charAt(0);
+            document.getElementById('podium-user-name').textContent = `${uName} (أنت)`;
+
+            document.getElementById('streak-counter').textContent = st.streak;
+            document.getElementById('water-text').textContent = `${st.water} / 3.5 لتر`;
+            document.getElementById('water-bar').style.width = `${Math.min(100, Math.round((st.water / 3.5) * 100))}%`;
+
+            document.getElementById('current-body-weight').textContent = `${st.bodyWeight} كجم`;
+            document.getElementById('pr-bench').textContent = `${st.prs.bench} كجم`;
+            document.getElementById('pr-squat').textContent = `${st.prs.squat} كجم`;
+            document.getElementById('pr-deadlift').textContent = `${st.prs.deadlift} كجم`;
+
+            const doneBtn = document.getElementById('done-btn');
+            if (st.userDoneToday) {
+                doneBtn.innerHTML = `عاش يا ${uName}! تم تسجيل تمرينك النهاردة ✅`;
+                doneBtn.className = "w-full bg-success text-white font-black text-xl py-5 rounded-2xl shadow-lg cursor-default";
+                doneBtn.disabled = true;
+            } else {
+                doneBtn.innerHTML = `أنا خلصت تمرينة النهاردة! تسجيل الحضور 💪`;
+                doneBtn.className = "w-full bg-gradient-to-r from-primary via-orange-500 to-amber-500 text-white font-black text-xl py-5 rounded-2xl shadow-[0_10px_35px_rgba(255,90,0,0.4)] transition-all";
+                doneBtn.disabled = false;
+            }
+
+            window.renderTodayWorkout();
+            window.renderSquad();
+            window.renderChat();
+        }
+
+        /* --- منطق المصادقة (تسجيل دخول / حساب جديد / استعادة الباسورد / خروج) --- */
+        let authMode = 'login'; // 'login' | 'signup' | 'reset'
+
+        window.switchAuthMode = function(mode) {
+            authMode = mode;
+            const nameWrap = document.getElementById('name-field-wrap');
+            const passWrap = document.getElementById('password-field-wrap');
+            const authTabs = document.getElementById('auth-tabs');
+            const resetHeader = document.getElementById('reset-header');
+            const backBtn = document.getElementById('back-to-login-btn');
+            const btnText = document.getElementById('auth-btn-text');
+            const passInput = document.getElementById('auth-password');
+
+            if (mode === 'login') {
+                authTabs.classList.remove('hidden');
+                resetHeader.classList.add('hidden');
+                nameWrap.classList.add('hidden');
+                passWrap.classList.remove('hidden');
+                backBtn.classList.add('hidden');
+                passInput.setAttribute('required', 'true');
+                btnText.textContent = 'دخول للبطولة 🔥';
+                document.getElementById('tab-login-btn').className = 'py-2.5 rounded-xl font-black text-xs bg-primary text-white shadow transition';
+                document.getElementById('tab-signup-btn').className = 'py-2.5 rounded-xl font-bold text-xs text-muted hover:text-white transition';
+            } else if (mode === 'signup') {
+                authTabs.classList.remove('hidden');
+                resetHeader.classList.add('hidden');
+                nameWrap.classList.remove('hidden');
+                passWrap.classList.remove('hidden');
+                backBtn.classList.add('hidden');
+                passInput.setAttribute('required', 'true');
+                btnText.textContent = 'إنشاء حساب جديد 💪';
+                document.getElementById('tab-signup-btn').className = 'py-2.5 rounded-xl font-black text-xs bg-primary text-white shadow transition';
+                document.getElementById('tab-login-btn').className = 'py-2.5 rounded-xl font-bold text-xs text-muted hover:text-white transition';
+            } else if (mode === 'reset') {
+                authTabs.classList.add('hidden');
+                resetHeader.classList.remove('hidden');
+                nameWrap.classList.add('hidden');
+                passWrap.classList.add('hidden');
+                backBtn.classList.remove('hidden');
+                passInput.removeAttribute('required');
+                btnText.textContent = 'إرسال رابط إعادة تعيين الباسورد 📧';
+            }
+        };
+
+        document.getElementById('auth-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+            const name = document.getElementById('auth-name').value.trim() || 'أسامة';
+            const spinner = document.getElementById('auth-spinner');
+            const btnText = document.getElementById('auth-btn-text');
+
+            spinner.classList.remove('hidden');
+            btnText.classList.add('hidden');
+
+            try {
+                if (authMode === 'reset') {
+                    await sendPasswordResetEmail(auth, email);
+                    window.showToast('تم إرسال رابط إعادة تعيين الباسورد على إيميلك بنجاح! تفقد البريد الوارد 📧');
+                    window.switchAuthMode('login');
+                } else if (authMode === 'login') {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    window.showToast('أهلاً بيك يا وحش من جديد! 🔥');
+                } else if (authMode === 'signup') {
+                    const cred = await createUserWithEmailAndPassword(auth, email, password);
+                    await updateProfile(cred.user, { displayName: name });
+                    window.appState.displayName = name;
+                    await window.saveUserData();
+                    window.showToast(`عاش يا ${name}! تم إنشاء حسابك وحفظ بياناتك بنجاح 🎉`);
+                }
+            }  catch (error) {
+                console.error(" Error:", error);
+                let msg = `Error  : (${error.code})`;
+                if (error.code === 'auth/email-already-in-use') msg = 'الإيميل ده مسجل بالفعل، حول التاب لتسجيل الدخول!';
+                else if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') msg = 'الإيميل أو كلمة المرور غير صحيحة!';
+                else if (error.code === 'auth/weak-password') msg = 'كلمة المرور ضعيفة، خليها 6 حروف أو أرقام على الأقل!';
+                else if (error.code === 'auth/unauthorized-domain') msg = 'النطاق غير مصرح به! افتح الموقع بـ localhost بدلاً من 127.0.0.1 أو ضيف 127.0.0.1 في Authorized domains بفايربيز';
+                else if (error.code === 'auth/operation-not-allowed') msg = 'طريقة الدخول غير مفعلة في مشروع فايربيز!';
+                else if (error.code === 'auth/network-request-failed') msg = 'مشكلة في الاتصال أو مانع إعلانات (AdBlock) حاجب فايربيز!';
+                window.showToast(msg, false);
+            }
+
+            spinner.classList.add('hidden');
+            btnText.classList.remove('hidden');
+        });
+
+        // الدخول السريع كزائر (يعمل مع Firebase Anonymous أو محلياً لو لم تفعلها بعد)
+        document.getElementById('guest-login-btn').addEventListener('click', async () => {
+            try {
+                await signInAnonymously(auth);
+                window.showToast('تم الدخول كزائر عبر سحابة Firebase بنجاح! 🚀');
+            } catch (err) {
+                // في حال لم يقم المستخدم بتفعيل Anonymous في لوحة فايربيز بعد، يفتح الموقع بحفظ محلي كامل
+                currentUserUid = 'local_guest';
+                document.getElementById('auth-gate').classList.add('hidden');
+                document.getElementById('app-wrapper').classList.remove('hidden');
+                await loadUserData('local_guest', 'أسامة');
+                window.showToast('تم الدخول بوضع الحفظ التلقائي على الجهاز! 💪');
+            }
+        });
+
+        // تسجيل الخروج
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            await window.saveUserData();
+            try { await signOut(auth); } catch(e) {}
+            currentUserUid = null;
+            document.getElementById('app-wrapper').classList.add('hidden');
+            document.getElementById('auth-gate').classList.remove('hidden');
+            window.showToast('تم تسجيل الخروج وحفظ كل تقدمك بأمان 👋');
+        });
+
+        // مراقب حالة المستخدم التلقائي من Firebase
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUserUid = user.uid;
+                document.getElementById('auth-gate').classList.add('hidden');
+                document.getElementById('app-wrapper').classList.remove('hidden');
+                document.getElementById('profile-email').textContent = user.email || 'حساب زائر سحابي • وحوش الأوليمبيا';
+                await loadUserData(user.uid, user.displayName || 'أسامة');
+            }
+        });
+    </script>
+
+    <!-- ==================== الجافاسكريبت العام للتطبيق ==================== -->
+    <script>
+        const IMG_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
+        
+        const exercisesData = [
+            { id: 1, name: 'بنش بريس مستوي بالبار', en: 'Barbell Bench Press', muscle: 'الصدر', equip: 'بار', sets: '4 مجاميع × 10 عدات', level: 'متوسط', folder: 'Barbell_Bench_Press_-_Medium_Grip', desc: 'نام على البنش المستوي، امسك البار بمسافة أوسع من الكتف، انزل ببطء لمنتصف الصدر واطلع بقوة بدون قفل الكوع للآخر.' },
+            { id: 2, name: 'تجميع صدر عالي بالدمبلز', en: 'Incline Dumbbell Press', muscle: 'الصدر', equip: 'دمبلز', sets: '4 مجاميع × 10 عدات', level: 'متوسط', folder: 'Incline_Dumbbell_Press', desc: 'اضبط البنش على زاوية 30 درجة لاستهداف الصدر العلوي، انزل بالدمبلز لمستوى الصدر واطلع مع العصر في الأعلى.' },
+            { id: 3, name: 'تفتيح صدر مستوي بالدمبلز', en: 'Dumbbell Flyes', muscle: 'الصدر', equip: 'دمبلز', sets: '3 مجاميع × 12 عدة', level: 'مبتدئ', folder: 'Dumbbell_Flyes', desc: 'افتح دراعك للجنب مع ثنية بسيطة في الكوع لحد ما تحس باسترتش قوي في الصدر، وضمهم لفوق كأنك بتحضن شجرة.' },
+            { id: 4, name: 'تجميع صدر بالكابل (Crossover)', en: 'Cable Crossover', muscle: 'الصدر', equip: 'كابل', sets: '3 مجاميع × 15 عدة', level: 'متوسط', folder: 'Cable_Crossover', desc: 'اقف في نص جهاز الكابل، اسحب المقابض لقدام صدرك واعصر العضلة ثانية كاملة في كل عدّة لضخ الدم.' },
+            { id: 5, name: 'متوازي للصدر والضخامة (Dips)', en: 'Chest Dips', muscle: 'الصدر', equip: 'وزن الجسم', sets: '3 مجاميع × أقصى تكرار', level: 'متقدم', folder: 'Dips_-_Chest_Version', desc: 'ميّل بجسمك لقدام شوية أثناء النزول على المتوازي عشان تحول التركيز كله على الصدر السفلي.' },
+            { id: 6, name: 'سحب عالي أمامي واسع (Lat Pulldown)', en: 'Wide-Grip Lat Pulldown', muscle: 'الظهر', equip: 'جهاز كابل', sets: '4 مجاميع × 12 عدة', level: 'مبتدئ', folder: 'Wide-Grip_Lat_Pulldown', desc: 'امسك البار الواسع، اسحب بكوعك لتحت لحد أعلى الصدر عشان تعرض عضلات المجنص، واطلع ببطء.' },
+            { id: 7, name: 'سحب بار منحني للظهر (Barbell Row)', en: 'Bent Over Barbell Row', muscle: 'الظهر', equip: 'بار', sets: '4 مجاميع × 10 عدات', level: 'متقدم', folder: 'Bent_Over_Barbell_Row', desc: 'اثني وسطك بزاوية 45 درجة بضهر مفرود تماماً، واسحب البار لأسفل البطن مع ضم لوحين الكتف.' },
+            { id: 8, name: 'سحب أرضي ضيق (Seated Row)', en: 'Seated Cable Rows', muscle: 'الظهر', equip: 'جهاز كابل', sets: '3 مجاميع × 12 عدة', level: 'مبتدئ', folder: 'Seated_Cable_Rows', desc: 'اقعد بضهر مستقيم، اسحب المقبض الضيق لبطنك وافرد صدرك لقدام في نهاية الحركة.' },
+            { id: 9, name: 'منشار بالدمبل فردي (One-Arm Row)', en: 'One-Arm Dumbbell Row', muscle: 'الظهر', equip: 'دمبل', sets: '3 مجاميع × 12 عدة', level: 'متوسط', folder: 'One-Arm_Dumbbell_Row', desc: 'اسند بإيد وركبة على البنش، واسحب الدمبل بجنب وسطك كأنك بتشغل منشار لعزل المجنص.' },
+            { id: 10, name: 'رفعة ميتة بالبار (Deadlift)', en: 'Barbell Deadlift', muscle: 'الظهر', equip: 'بار', sets: '3 مجاميع × 6 عدات', level: 'متقدم', folder: 'Barbell_Deadlift', desc: 'تمرين القوة الشاملة! خلي البار قريب من قصبة رجلك، ضهرك مفرود، وادفع الأرض برجلك لحد ما تقف مستقيم.' },
+            { id: 11, name: 'سكوات حر بالبار (Barbell Squat)', en: 'Barbell Full Squat', muscle: 'الرجل', equip: 'بار', sets: '4 مجاميع × 8 عدات', level: 'متقدم', folder: 'Barbell_Full_Squat', desc: 'ملك تمارين الرجل! ثبت البار على الترابيس، انزل بضهر مفرود لحد ما فخذك يوازي الأرض واطلع بقوة.' },
+            { id: 12, name: 'دفع رجل على الجهاز (Leg Press)', en: 'Leg Press', muscle: 'الرجل', equip: 'جهاز', sets: '4 مجاميع × 12 عدة', level: 'مبتدئ', folder: 'Leg_Press', desc: 'حط رجلك بعرض الكتف على المنصة، انزل بعمق آمن وادفع الوزن بدون قفل مفصل الركبة للآخر.' },
+            { id: 13, name: 'رفرفة رجل أمامي (Leg Extension)', en: 'Leg Extensions', muscle: 'الرجل', equip: 'جهاز', sets: '3 مجاميع × 15 عدة', level: 'مبتدئ', folder: 'Leg_Extensions', desc: 'تمرين عزل ممتاز لتفصيل العضلة الأمامية (Quads)، اثبت ثانية فوق في كل عدّة.' },
+            { id: 14, name: 'رفرفة رجل خلفي نائم (Leg Curl)', en: 'Lying Leg Curls', muscle: 'الرجل', equip: 'جهاز', sets: '3 مجاميع × 12 عدة', level: 'مبتدئ', folder: 'Lying_Leg_Curls', desc: 'نام على الجهاز واثني رجلك لاستهداف العضلة الخلفية للفخذ (Hamstrings) بتحكم كامل.' },
+            { id: 15, name: 'سمانة واقف (Standing Calf Raise)', en: 'Standing Calf Raises', muscle: 'الرجل', equip: 'جهاز', sets: '4 مجاميع × 20 عدة', level: 'مبتدئ', folder: 'Standing_Calf_Raises', desc: 'انزل بكعب رجلك للآخر عشان تعمل استرتش، واطلع على مشط رجلك لأقصى مدى.' },
+            { id: 16, name: 'تجميع كتف بالدمبلز جالس', en: 'Seated Dumbbell Press', muscle: 'الكتف', equip: 'دمبلز', sets: '4 مجاميع × 10 عدات', level: 'متوسط', folder: 'Dumbbell_Shoulder_Press', desc: 'اقعد على بنش بضهر قائم، وادفع الدمبلز لفوق لبناء كتلة ضخمة للكتف الأمامي والجانبي.' },
+            { id: 17, name: 'رفرفة جانبي بالدمبلز', en: 'Side Lateral Raise', muscle: 'الكتف', equip: 'دمبلز', sets: '4 مجاميع × 15 عدة', level: 'مبتدئ', folder: 'Side_Lateral_Raise', desc: 'سر عرض الأكتاف! ارفع الدمبلز للجنب بكوعك لحد مستوى الكتف وانزل ببطء.' },
+            { id: 18, name: 'سحب للوجه بالحبل (Face Pull)', en: 'Face Pull', muscle: 'الكتف', equip: 'كابل', sets: '3 مجاميع × 15 عدة', level: 'مبتدئ', folder: 'Face_Pull', desc: 'اسحب الحبل باتجاه جبهتك مع فتح كوعك لبره لاستهداف الكتف الخلفي وصحة مفصل الكتف.' },
+            { id: 19, name: 'بايسبس بالبار واقف', en: 'Barbell Curl', muscle: 'الذراع', equip: 'بار', sets: '4 مجاميع × 10 عدات', level: 'مبتدئ', folder: 'Barbell_Curl', desc: 'ثبت كوعك في جنبك وارفع البار بدون مرجحة الضهر عشان تفجر عضلة البايسبس.' },
+            { id: 20, name: 'هامر كيرل بالدمبلز (Hammer Curl)', en: 'Hammer Curls', muscle: 'الذراع', equip: 'دمبلز', sets: '3 مجاميع × 12 عدة', level: 'مبتدئ', folder: 'Hammer_Curls', desc: 'امسك الدمبلز بوضع المطرقة (الإبهام لفوق) لتضخيم البايسبس الخارجية وعضلة الساعد.' },
+            { id: 21, name: 'ترايسبس بالحبل على الكابل', en: 'Triceps Pushdown', muscle: 'الذراع', equip: 'كابل', sets: '4 مجاميع × 12 عدة', level: 'مبتدئ', folder: 'Triceps_Pushdown_-_Rope_Attachment', desc: 'ثبت كوعك وانزل بالحبل للآخر مع تفريق طرفين الحبل في الأسفل لعصر الترايسبس.' },
+            { id: 22, name: 'كسر الجمجمة بالبار الزجزاج (Skullcrusher)', en: 'EZ-Bar Skullcrusher', muscle: 'الذراع', equip: 'بار زجزاج', sets: '3 مجاميع × 10 عدات', level: 'متوسط', folder: 'EZ-Bar_Skullcrusher', desc: 'نام على البنش وانزل بالبار الزجزاج ورا جبهتك بثبات الكوع، وافرد دراعك لفوق.' },
+            { id: 23, name: 'طحن بطن على الكابل (Cable Crunch)', en: 'Cable Crunch', muscle: 'البطن', equip: 'كابل', sets: '4 مجاميع × 15 عدة', level: 'متوسط', folder: 'Cable_Crunch', desc: 'انزل على ركبتك وامسك الحبل جنب راسك، واثني عضلات بطنك لتحت لبروز الـ Six Packs.' },
+            { id: 24, name: 'رفع أرجل متعلق (Hanging Leg Raise)', en: 'Hanging Leg Raise', muscle: 'البطن', equip: 'عقلة', sets: '3 مجاميع × 12 عدة', level: 'متقدم', folder: 'Hanging_Leg_Raise', desc: 'اتعلق في العقلة وارفع رجلك لفوق لاستهداف عضلات البطن السفلية بقوة.' }
+        ];
+
+        const toastContainer = document.getElementById('toast-container');
+        window.showToast = function(message, isSuccess = true) {
+            const toast = document.createElement('div');
+            toast.className = `px-4 py-3.5 rounded-2xl text-white font-bold shadow-2xl toast-enter border border-white/15 flex items-center gap-3 text-xs sm:text-sm ${isSuccess ? 'bg-success' : 'bg-primary'}`;
+            toast.innerHTML = `<span>${isSuccess ? '✅' : '🔥'}</span><span>${message}</span>`;
+            toastContainer.appendChild(toast);
+            requestAnimationFrame(() => {
+                toast.classList.add('toast-enter-active');
+                toast.classList.remove('toast-enter');
+            });
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-100%)';
+                setTimeout(() => toast.remove(), 350);
+            }, 2800);
+        };
+
+        window.switchTab = function(tabId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(`view-${tabId}`).classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.className = 'nav-btn text-muted hover:text-white flex flex-col items-center min-w-[60px] py-1.5 px-2 rounded-2xl transition-all border border-transparent';
+            });
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if(activeBtn) {
+                activeBtn.className = 'nav-btn bg-primary/15 text-primary border border-primary/30 flex flex-col items-center min-w-[60px] py-1.5 px-2 rounded-2xl transition-all scale-105';
+            }
+        };
+
+        window.copyInvite = function() {
+            navigator.clipboard.writeText("AASH-OLYMPIA-99");
+            window.showToast('تم نسخ كود الشلة (AASH-OLYMPIA-99)! ابعته لصحابك');
+        };
+
+        window.addWater = function(amount) {
+            window.appState.water = Math.min(3.5, +(window.appState.water + amount).toFixed(2));
+            document.getElementById('water-text').textContent = `${window.appState.water} / 3.5 لتر`;
+            const pct = Math.min(100, Math.round((window.appState.water / 3.5) * 100));
+            document.getElementById('water-bar').style.width = `${pct}%`;
+            window.saveUserData();
+            if(window.appState.water >= 3.5) window.showToast('عاش! قفلت تارجت المية اليومي بالكامل 💧');
+            else window.showToast(`تم تسجيل شرب ${amount * 1000} مل مية وحفظها! 💧`);
+        };
+
+        // الروليت
+        const spinBtn = document.getElementById('spin-btn');
+        const rouletteResult = document.getElementById('roulette-result');
+        const musclesList = ['الصدر والباي 🏋️', 'الظهر والتراي 🦍', 'الرجل الكامل 🦵', 'الكتف والبطن 💪', 'الذراع كامل 🦾'];
+
+        spinBtn.addEventListener('click', () => {
+            if(spinBtn.disabled) return;
+            spinBtn.disabled = true;
+            let count = 0;
+            let interval = setInterval(() => {
+                rouletteResult.textContent = musclesList[Math.floor(Math.random() * musclesList.length)];
+                count++;
+                if (count > 18) {
+                    clearInterval(interval);
+                    const chosen = musclesList[Math.floor(Math.random() * musclesList.length)];
+                    rouletteResult.textContent = chosen;
+                    rouletteResult.classList.add('text-primary');
+                    spinBtn.textContent = 'تم تحديد التمرينة ✅';
+                    spinBtn.classList.replace('bg-white', 'bg-gray-800');
+                    spinBtn.classList.replace('text-bg', 'text-gray-400');
+                    window.showToast(`قرار العجلة: النهاردة يوم ${chosen}!`, false);
+                }
+            }, 80);
+        });
+
+        function calculateTotalVolume() {
+            let total = 0;
+            window.appState.todayWorkout.forEach(w => {
+                if(w.done) total += (w.weight || 0) * (w.reps || 0) * (w.setsCount || 3);
+            });
+            document.getElementById('total-volume-badge').textContent = `${total.toLocaleString()} كجم`;
+        }
+
+        window.renderTodayWorkout = function() {
+            const container = document.getElementById('today-workout-list');
+            const list = window.appState.todayWorkout;
+            if(!list || list.length === 0) {
+                container.innerHTML = `<p class="text-sm text-gray-500 text-center py-6 bg-bg/50 rounded-2xl border border-white/5">الجدول فاضي.. ضيف تمارين من الموسوعة أو حمل جدول جاهز!</p>`;
+                calculateTotalVolume();
+                return;
+            }
+            container.innerHTML = list.map((w, idx) => `
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-bg/80 p-4 rounded-2xl border transition ${w.done ? 'border-success/50 bg-success/5' : 'border-white/5 hover:border-white/15'}">
+                    <div class="flex items-center gap-3.5">
+                        <input type="checkbox" ${w.done ? 'checked' : ''} onchange="toggleWorkoutItem(${idx})" class="w-5 h-5 accent-primary rounded cursor-pointer">
+                        <div>
+                            <p class="font-black text-sm ${w.done ? 'line-through text-gray-400' : 'text-white'}">${w.name}</p>
+                            <span class="text-[11px] text-primary font-bold">${w.sets}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 self-end sm:self-center">
+                        <div class="flex items-center bg-card border border-white/10 rounded-xl px-2.5 py-1.5">
+                            <input type="number" value="${w.weight}" onchange="updateWorkoutLog(${idx}, 'weight', this.value)" class="w-12 bg-transparent text-center font-black text-xs text-white focus:outline-none">
+                            <span class="text-[10px] text-gray-400">كجم</span>
+                        </div>
+                        <span class="text-xs text-gray-500">×</span>
+                        <div class="flex items-center bg-card border border-white/10 rounded-xl px-2.5 py-1.5">
+                            <input type="number" value="${w.reps}" onchange="updateWorkoutLog(${idx}, 'reps', this.value)" class="w-10 bg-transparent text-center font-black text-xs text-white focus:outline-none">
+                            <span class="text-[10px] text-gray-400">عدّة</span>
+                        </div>
+                        <button onclick="removeWorkoutItem(${idx})" class="text-gray-500 hover:text-red-500 text-sm px-2 transition">✕</button>
+                    </div>
+                </div>
+            `).join('');
+            calculateTotalVolume();
+        };
+
+        window.updateWorkoutLog = function(idx, field, val) {
+            window.appState.todayWorkout[idx][field] = parseFloat(val) || 0;
+            calculateTotalVolume();
+            window.saveUserData();
+        };
+
+        window.toggleWorkoutItem = function(idx) {
+            window.appState.todayWorkout[idx].done = !window.appState.todayWorkout[idx].done;
+            window.renderTodayWorkout();
+            window.saveUserData();
+            if(window.appState.todayWorkout[idx].done) window.showToast('عاش! تم حفظ أوزان التمرينة في الداتا بيز 💪');
+        };
+
+        window.removeWorkoutItem = function(idx) {
+            window.appState.todayWorkout.splice(idx, 1);
+            window.renderTodayWorkout();
+            window.saveUserData();
+        };
+
+        // الشلة
+        window.renderSquad = function() {
+            const uName = window.appState.displayName || 'أسامة';
+            const uDone = window.appState.userDoneToday;
+            const squadMembers = [
+                { id: 1, name: `${uName} (أنت)`, initial: uName.charAt(0), done: uDone, isUser: true, time: uDone ? 'خلص تمرينة عالمية' : 'جاري التمرين...' },
+                { id: 2, name: 'أحمد', initial: 'ح', done: true, time: 'شال 6,400 كجم النهاردة' },
+                { id: 3, name: 'مروان', initial: 'م', done: true, time: 'شال 5,200 كجم النهاردة' },
+                { id: 4, name: 'عبدالله', initial: 'ع', done: false, time: 'لسه في الطريق للجيم 🚶‍♂️' },
+                { id: 5, name: 'بيبو', initial: 'ب', done: false, time: 'لسه  نايم 😴' }
+            ];
+
+            const list = document.getElementById('squad-list');
+            const doneCount = squadMembers.filter(m => m.done).length;
+            document.getElementById('squad-progress-badge').textContent = `${doneCount}/${squadMembers.length} خلصوا`;
+
+            list.innerHTML = squadMembers.map(m => `
+                <div class="flex items-center justify-between bg-bg/80 p-4 rounded-2xl border ${m.done ? 'border-success/40' : 'border-white/5'}">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-xl ${m.done ? 'bg-success/20 text-success' : 'bg-card text-gray-400'} flex items-center justify-center font-black text-lg">
+                            ${m.initial}
+                        </div>
+                        <div>
+                            <p class="font-bold text-sm text-white">${m.name}</p>
+                            <span class="text-[11px] font-bold ${m.done ? 'text-success' : 'text-gray-500'}">${m.done ? 'تم التمرين ✅ • ' + m.time : m.time}</span>
+                        </div>
+                    </div>
+                    ${!m.done && !m.isUser ? `<button onclick="showToast('بعتنا إنذار لـ ${m.name}: قوم اتمرن الستريك هيضيع! 🔔', false)" class="text-xs bg-primary/15 text-primary border border-primary/30 px-3.5 py-1.5 rounded-xl font-bold hover:bg-primary hover:text-white transition">نكز 🔔</button>` : ''}
+                </div>
+            `).join('');
+        };
+
+        document.getElementById('done-btn').addEventListener('click', function() {
+            if (window.appState.userDoneToday) return;
+            window.appState.userDoneToday = true;
+            window.appState.streak += 1;
+            window.saveUserData();
+            window.renderSquad();
+            this.innerHTML = `عاش يا ${window.appState.displayName}! تم تسجيل تمرينك النهاردة ✅`;
+            this.className = "w-full bg-success text-white font-black text-xl py-5 rounded-2xl shadow-lg cursor-default";
+            this.disabled = true;
+            document.getElementById('streak-counter').textContent = window.appState.streak;
+            window.showToast('عااااش! الستريك زاد يوم واتحفظ في قاعدة البيانات 🔥');
+        });
+
+        /* --- موسوعة التمارين --- */
+        const filters = ['الكل', 'الصدر', 'الظهر', 'الرجل', 'الكتف', 'الذراع', 'البطن'];
+        const filterContainer = document.getElementById('filter-container');
+        const grid = document.getElementById('exercises-grid');
+        const searchInput = document.getElementById('search-input');
+        let currentFilter = 'الكل';
+
+        filters.forEach(f => {
+            const btn = document.createElement('button');
+            btn.className = `filter-btn px-5 py-2.5 rounded-2xl font-bold whitespace-nowrap text-xs sm:text-sm transition border ${f === 'الكل' ? 'bg-primary text-white border-primary shadow-lg shadow-primary/25' : 'bg-card text-muted border-white/5 hover:border-primary/50 hover:text-white'}`;
+            btn.textContent = f;
+            btn.onclick = () => {
+                document.querySelectorAll('.filter-btn').forEach(b => {
+                    b.className = 'filter-btn px-5 py-2.5 rounded-2xl font-bold whitespace-nowrap text-xs sm:text-sm transition border bg-card text-muted border-white/5 hover:border-primary/50 hover:text-white';
+                });
+                btn.className = 'filter-btn px-5 py-2.5 rounded-2xl font-bold whitespace-nowrap text-xs sm:text-sm transition border bg-primary text-white border-primary shadow-lg shadow-primary/25';
+                currentFilter = f;
+                applyFilters();
+            };
+            filterContainer.appendChild(btn);
+        });
+
+        function applyFilters() {
+            const term = searchInput.value.trim().toLowerCase();
+            let filtered = exercisesData;
+            if (currentFilter !== 'الكل') filtered = filtered.filter(ex => ex.muscle === currentFilter);
+            if (term) filtered = filtered.filter(ex => ex.name.includes(term) || ex.en.toLowerCase().includes(term));
+            renderExercises(filtered);
+        }
+
+        function renderExercises(data) {
+            grid.innerHTML = data.map(ex => {
+                const img0 = `${IMG_BASE}${ex.folder}/0.jpg`;
+                return `
+                <div class="ex-card pro-card rounded-[2rem] overflow-hidden group flex flex-col justify-between relative">
+                    <div class="h-1 bg-gradient-to-r from-primary to-amber-400 hover-progress"></div>
+                    <div>
+                        <div onclick="openModal(${ex.id})" class="h-56 bg-black overflow-hidden relative cursor-pointer">
+                            <img src="${img0}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#121318] via-transparent to-black/30"></div>
+                            <span class="absolute top-3 right-3 bg-primary px-3.5 py-1 rounded-full text-xs font-black text-white shadow-lg">${ex.muscle}</span>
+                            <span class="absolute top-3 left-3 bg-black/75 backdrop-blur-md border border-white/10 px-3 py-1 rounded-full text-[10px] font-bold text-gray-200">${ex.equip}</span>
+                            <span class="absolute bottom-3 left-3 bg-white/10 group-hover:bg-primary backdrop-blur-md px-3 py-1 rounded-lg text-[11px] font-bold text-white transition">عرض الشرح والأداء الحركي ℹ️</span>
+                        </div>
+                        <div class="p-5 pb-2">
+                            <h3 onclick="openModal(${ex.id})" class="text-lg font-black text-white group-hover:text-primary cursor-pointer transition">${ex.name}</h3>
+                            <p class="text-[11px] text-muted font-mono">${ex.en}</p>
+                            <div class="flex items-center justify-between mt-3 pt-2 border-t border-white/5">
+                                <span class="text-xs text-primary font-black">${ex.sets}</span>
+                                <span class="text-[11px] text-gray-400 font-bold">المستوى: ${ex.level}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-5 pt-3">
+                        <button onclick="addToTodayWorkout(${ex.id})" class="w-full bg-bg/90 border border-primary/40 text-primary font-black text-xs py-3 rounded-xl hover:bg-primary hover:text-white transition shadow-sm">
+                            + ضيف لجدول تمرين النهاردة
+                        </button>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        searchInput.addEventListener('input', applyFilters);
+        renderExercises(exercisesData);
+
+        let modalAnimInterval = null;
+        window.openModal = function(id) {
+            const ex = exercisesData.find(e => e.id === id);
+            const modalImg = document.getElementById('modal-img');
+            const preload = new Image();
+            preload.src = `${IMG_BASE}${ex.folder}/1.jpg`;
+            modalImg.src = `${IMG_BASE}${ex.folder}/0.jpg`;
+            
+            document.getElementById('modal-muscle').textContent = ex.muscle;
+            document.getElementById('modal-title').textContent = ex.name;
+            document.getElementById('modal-en-title').textContent = ex.en;
+            document.getElementById('modal-sets').textContent = ex.sets;
+            document.getElementById('modal-equip').textContent = `الأداة: ${ex.equip}`;
+            document.getElementById('modal-level').textContent = `المستوى: ${ex.level}`;
+            document.getElementById('modal-desc').textContent = ex.desc;
+            
+            document.getElementById('modal-add-btn').onclick = () => {
+                window.addToTodayWorkout(ex.id);
+                window.closeModal();
+            };
+
+            let frame = 0;
+            if (modalAnimInterval) clearInterval(modalAnimInterval);
+            modalAnimInterval = setInterval(() => {
+                frame = frame === 0 ? 1 : 0;
+                modalImg.src = `${IMG_BASE}${ex.folder}/${frame}.jpg`;
+            }, 750);
+
+            const modal = document.getElementById('exercise-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.closeModal = function() {
+            if (modalAnimInterval) {
+                clearInterval(modalAnimInterval);
+                modalAnimInterval = null;
+            }
+            const modal = document.getElementById('exercise-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        window.addToTodayWorkout = function(id) {
+            const ex = exercisesData.find(e => e.id === id);
+            window.appState.todayWorkout.push({ id: ex.id, name: ex.name, sets: ex.sets, weight: 40, reps: 10, setsCount: 4, done: false });
+            window.renderTodayWorkout();
+            window.saveUserData();
+            window.showToast(`تم إضافة "${ex.name}" وحفظها في جدولك! 💪`);
+        };
+
+        /* --- الجداول الجاهزة --- */
+        const workoutSplits = [
+            { title: 'يوم الدفع (Push Day - PPL)', subtitle: 'صدر + كتف أمامي وجانبي + ترايسبس', badge: 'الأشهر عالمياً', exerciseIds: [1, 2, 16, 17, 21, 22] },
+            { title: 'يوم السحب (Pull Day - PPL)', subtitle: 'ظهر كامل + كتف خلفي + بايسبس', badge: 'ضخامة وعرض', exerciseIds: [6, 7, 8, 18, 19, 20] },
+            { title: 'يوم الرجل والبطن (Leg Day)', subtitle: 'أماميات + خلفيات + سمانة + بطن', badge: 'أساس القوة', exerciseIds: [11, 12, 13, 14, 15, 23] },
+            { title: 'أرنولد سبليت (صدر وظهر معاً)', subtitle: 'سوبر سيت أسطوري للضخ الدموي الرهيب', badge: 'للمحترفين 🔥', exerciseIds: [1, 6, 2, 7, 3, 9] }
+        ];
+
+        function renderSplits() {
+            const container = document.getElementById('splits-container');
+            container.innerHTML = workoutSplits.map((sp, idx) => {
+                const exList = sp.exerciseIds.map(id => exercisesData.find(e => e.id === id));
+                return `
+                <div class="pro-card p-6 rounded-[2rem] flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-xl font-black text-white">${sp.title}</h3>
+                            <span class="bg-primary/15 text-primary border border-primary/30 text-[11px] font-black px-3 py-1 rounded-full">${sp.badge}</span>
+                        </div>
+                        <p class="text-xs text-gray-400 font-bold mb-4">${sp.subtitle}</p>
+                        <div class="space-y-2 mb-5">
+                            ${exList.map(e => `
+                                <div class="flex items-center justify-between bg-bg/80 px-3.5 py-2.5 rounded-xl border border-white/5 text-xs">
+                                    <span class="font-bold text-gray-200">• ${e.name}</span>
+                                    <span class="text-primary font-bold">${e.sets}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <button onclick="loadSplitToDashboard(${idx})" class="w-full bg-gradient-to-r from-primary to-orange-600 text-white font-black py-3.5 rounded-xl transition shadow-lg shadow-primary/20">
+                        اعتماد وحفظ الجدول لتمرين النهاردة 📋
+                    </button>
+                </div>
+            `}).join('');
+        }
+        renderSplits();
+
+        window.loadSplitToDashboard = function(idx) {
+            const sp = workoutSplits[idx];
+            window.appState.todayWorkout = sp.exerciseIds.map(id => {
+                const ex = exercisesData.find(e => e.id === id);
+                return { id: ex.id, name: ex.name, sets: ex.sets, weight: 50, reps: 10, setsCount: 4, done: false };
+            });
+            window.renderTodayWorkout();
+            window.saveUserData();
+            window.switchTab('dashboard');
+            window.showToast(`تم تحميل وحفظ "${sp.title}" في صفحتك الرئيسية! 🔥`);
+        };
+
+        /* --- التغذية --- */
+        const mealsData = [
+            { name: 'بول الفراخ المشوية والأرز البسمتي', type: 'ضخامة', cal: 680, pro: '52g', carb: '75g', fat: '14g', desc: '200 جرام صدور دجاج مشوية + 200 جرام أرز بسمتي مسلوق + بروكلي وزيت زيتون.' },
+            { name: 'شوفان بالواي بروتين وزبدة الفول السوداني', type: 'ضخامة', cal: 620, pro: '42g', carb: '65g', fat: '18g', desc: '80 جرام شوفان بالحليب + سكوب واي بروتين + ملعقة زبدة فول سوداني وموزة.' },
+            { name: 'ستيك لحم بقري صافي مع بطاطا مشوية', type: 'ضخامة', cal: 710, pro: '55g', carb: '60g', fat: '22g', desc: '200 جرام لحم ستيك قليل الدهن + 250 جرام بطاطا حلوة في الفرن.' },
+            { name: 'سلطة التونة الدايت بالذرة والليمون', type: 'تنشيف', cal: 340, pro: '40g', carb: '22g', fat: '6g', desc: 'علبة تونة مصفاة ومغسولة + خس وخيار وفلفل ألوان + 3 ملاعق ذرة حلوة.' },
+            { name: 'أومليت بياض البيض بالشوفان والجبن القريش', type: 'تنشيف', cal: 390, pro: '38g', carb: '30g', fat: '9g', desc: '5 بياض بيض + بيضة كاملة + 100 جرام جبنة قريش + 40 جرام شوفان.' },
+            { name: 'سمك سلمون مشوي مع أرز أبيض وخضار', type: 'تنشيف', cal: 480, pro: '44g', carb: '35g', fat: '16g', desc: '180 جرام فيليه سلمون غني بالأوميجا 3 + 100 جرام أرز + كوسة سوتيه.' }
+        ];
+
+        function renderMeals(filter = 'all') {
+            const mGrid = document.getElementById('meals-grid');
+            const list = filter === 'all' ? mealsData : mealsData.filter(m => m.type === filter);
+            mGrid.innerHTML = list.map(m => `
+                <div class="pro-card p-5 rounded-[1.75rem] flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-xs font-black px-3 py-1 rounded-full ${m.type === 'ضخامة' ? 'bg-primary/20 text-primary' : 'bg-emerald-500/20 text-emerald-400'}">وجبة ${m.type}</span>
+                            <span class="text-sm font-black text-white">${m.cal} سعرة 🔥</span>
+                        </div>
+                        <h4 class="text-lg font-black text-white mt-2 mb-2">${m.name}</h4>
+                        <p class="text-xs text-gray-400 leading-relaxed mb-4">${m.desc}</p>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 bg-bg/80 p-3 rounded-2xl border border-white/5 text-center">
+                        <div><span class="text-[10px] text-gray-400 block">بروتين</span><span class="text-sm font-black text-primary">${m.pro}</span></div>
+                        <div><span class="text-[10px] text-gray-400 block">كارب</span><span class="text-sm font-black text-white">${m.carb}</span></div>
+                        <div><span class="text-[10px] text-gray-400 block">دهون صحية</span><span class="text-sm font-black text-amber-400">${m.fat}</span></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        renderMeals();
+
+        window.filterMeals = function(type, btnEl) {
+            if (btnEl) {
+                document.querySelectorAll('.meal-filter-btn').forEach(b => {
+                    b.className = 'meal-filter-btn bg-bg text-gray-400 border border-white/10 px-4 py-2 rounded-xl text-xs font-bold transition';
+                });
+                btnEl.className = 'meal-filter-btn bg-primary text-white px-4 py-2 rounded-xl text-xs font-black transition';
+            }
+            renderMeals(type);
+        };
+
+        /* --- الشات --- */
+        window.renderChat = function() {
+            const box = document.getElementById('chat-messages');
+            box.innerHTML = window.appState.chatMessages.map(msg => `
+                <div class="flex flex-col ${msg.me ? 'items-start' : 'items-end'}">
+                    <span class="text-[10px] text-gray-400 font-bold mb-1 px-1">${msg.sender}</span>
+                    <div class="px-4 py-2.5 rounded-2xl max-w-[85%] text-xs font-bold ${msg.me ? 'bg-primary text-white rounded-tr-none' : 'bg-bg border border-white/10 text-gray-200 rounded-tl-none'}">
+                        ${msg.text}
+                    </div>
+                </div>
+            `).join('');
+            box.scrollTop = box.scrollHeight;
+        };
+
+        window.sendChatMessage = function() {
+            const input = document.getElementById('chat-input');
+            const txt = input.value.trim();
+            if(!txt) return;
+            const uName = window.appState.displayName || 'أسامة';
+            window.appState.chatMessages.push({ sender: `${uName} (أنت)`, text: txt, me: true });
+            input.value = '';
+            window.renderChat();
+            window.saveUserData();
+        };
+
+        /* --- الأدوات --- */
+        window.calculatePlates = function() {
+            const target = parseFloat(document.getElementById('target-bar-weight').value);
+            if (!target || target < 20) return window.showToast('أقل وزن هو وزن البار الفاضي (20 كجم)!', false);
+            let sideWeight = (target - 20) / 2;
+            const availablePlates = [
+                { w: 25, color: 'bg-red-600', h: 'h-28' },
+                { w: 20, color: 'bg-blue-600', h: 'h-28' },
+                { w: 15, color: 'bg-yellow-500 text-black', h: 'h-24' },
+                { w: 10, color: 'bg-emerald-600', h: 'h-20' },
+                { w: 5, color: 'bg-gray-200 text-black', h: 'h-16' },
+                { w: 2.5, color: 'bg-orange-500', h: 'h-14' },
+                { w: 1.25, color: 'bg-gray-500', h: 'h-12' }
+            ];
+            const chosen = [];
+            availablePlates.forEach(p => {
+                while (sideWeight >= p.w) {
+                    chosen.push(p);
+                    sideWeight = +(sideWeight - p.w).toFixed(2);
+                }
+            });
+            const visual = document.getElementById('plates-visual');
+            const summary = document.getElementById('plates-text-summary');
+            if (chosen.length === 0) {
+                visual.innerHTML = `<span class="text-xs text-gray-400 px-3">بار فاضي (20 كجم) بدون طارات</span>`;
+                summary.textContent = 'البار الفاضي فقط (20 كجم)';
+                return;
+            }
+            visual.innerHTML = chosen.map(p => `<div class="${p.color} ${p.h} w-6 sm:w-7 rounded-md flex items-center justify-center font-black text-[10px] shadow-md border border-white/20">${p.w}</div>`).join('');
+            const counts = {};
+            chosen.forEach(p => counts[p.w] = (counts[p.w] || 0) + 1);
+            summary.textContent = `حط في كل ناحية من البار: ${Object.keys(counts).map(w => `(${counts[w]} × طارة ${w} كجم)`).join(' + ')}`;
+        };
+        window.calculatePlates();
+
+        function playBeep() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.frequency.setValueAtTime(880, ctx.currentTime);
+                gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                osc.start(); osc.stop(ctx.currentTime + 0.45);
+            } catch(e) {}
+        }
+
+        let timerDuration = 60, timeLeft = 60, timerInterval = null;
+        function updateTimerUI() {
+            const mins = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+            const secs = String(timeLeft % 60).padStart(2, '0');
+            document.getElementById('timer-display').textContent = `${mins}:${secs}`;
+            document.getElementById('timer-ring').style.strokeDashoffset = 264 - (timeLeft / timerDuration) * 264;
+        }
+        window.setTimer = function(seconds) {
+            clearInterval(timerInterval); timerInterval = null;
+            timerDuration = seconds; timeLeft = seconds;
+            document.getElementById('timer-toggle-btn').textContent = 'ابدأ التايمر';
+            document.getElementById('timer-status').textContent = 'جاهز للبدء';
+            updateTimerUI();
+        };
+        window.toggleTimer = function() {
+            const toggleBtn = document.getElementById('timer-toggle-btn');
+            const statusText = document.getElementById('timer-status');
+            if (timerInterval) {
+                clearInterval(timerInterval); timerInterval = null;
+                toggleBtn.textContent = 'استكمال'; statusText.textContent = 'متوقف مؤقتاً';
+            } else {
+                statusText.textContent = 'استرح وخد نفسك...'; toggleBtn.textContent = 'إيقاف مؤقت';
+                timerInterval = setInterval(() => {
+                    timeLeft--; updateTimerUI();
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval); timerInterval = null; playBeep();
+                        statusText.textContent = 'انتهت الراحة! ادخل المجموعة 🔥';
+                        toggleBtn.textContent = 'ابدأ من جديد'; timeLeft = timerDuration;
+                        window.showToast('وقت الراحة خلص! ادخل على المجموعة الجاية 🔔', false);
+                    }
+                }, 1000);
+            }
+        };
+        window.resetTimer = function() { window.setTimer(timerDuration); };
+
+        window.calculate1RM = function() {
+            const w = parseFloat(document.getElementById('rm-weight').value);
+            const r = parseFloat(document.getElementById('rm-reps').value);
+            if (!w || !r || r <= 0) return window.showToast('دخل الوزن والعدات الأول!', false);
+            const oneRM = Math.round(w * (1 + r / 30));
+            document.getElementById('rm-result').textContent = `${oneRM} كجم 🔥`;
+            window.showToast(`أقصى وزن متوقع ليك هو ${oneRM} كجم!`);
+        };
+
+        /* --- البروفايل وحفظ الأرقام القياسية في الداتا بيز --- */
+        window.updatePR = function(type) {
+            const names = { bench: 'البنش بريس', squat: 'السكوات', deadlift: 'الديدليفت' };
+            const newWeight = prompt(`دخل رقمك القياسي الجديد في ${names[type]} (كجم):`);
+            if (newWeight && !isNaN(newWeight)) {
+                window.appState.prs[type] = parseFloat(newWeight);
+                document.getElementById(`pr-${type}`).textContent = `${newWeight} كجم`;
+                window.saveUserData();
+                window.showToast(`مبروك كسر الوزن الجديد (${newWeight} كجم)! تم حفظه في الداتا بيز 🎉`);
+            }
+        };
+
+        window.logBodyWeight = function() {
+            const nw = prompt('دخل وزن جسمك النهاردة (كجم):');
+            if (nw && !isNaN(nw)) {
+                window.appState.bodyWeight = parseFloat(nw);
+                document.getElementById('current-body-weight').textContent = `${nw} كجم`;
+                window.saveUserData();
+                window.showToast(`تم تحديث وحفظ وزن جسمك الحالي إلى ${nw} كجم ⚖️`);
+            }
+        };
+    </script>
+</body>
+</html>
